@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        body,div,span,ul,li{padding: 0;margin: 0;}
+        li{list-style: none;}
+        /*注意border的位置，与js相关*/
+        .box{position:relative;width: 420px;margin: 20px auto 0;border-top: 5px solid #b8af9e;border-left:5px solid #b8af9e;}
+        .box ul{background: #ccc0b2;width: 100%;height:auto;overflow: hidden;}
+        .box li{float: left;width: 100px;height: 100px;border-right:5px solid #b8af9e;border-bottom: 5px solid #b8af9e;}
+        /*span标签用于储存生成的数字格子*/
+        .box span{position: absolute;width: 100px;height: 100px;line-height: 100px;font-family: Arial;font-size: 60px;background: #eee4da;text-align: center;color: #7c736a;transform:scale(0.5,0.5);transition:all 0.5s;}
+        .box .span4{background: #ece0c8;}
+        .box .span8{background: #f29760;}
+        .box .span16{background: #f29760;}
+        .box .span32{background: #f29760;}
+        .box .span64{background: #f65d3d;}
+        .box .span128{background: #e8cf75;}
+        .box .span256{background: #eecc5e;}
+        .box .span1024{background: #eec22b;font-size: 12px;}
+        .box .span512{background: #e19120;}
+        .box .span2048{background: #efc229;font-size: 12px;}
+        .box .span4096{background: #b982ac;font-size: 12px;}
+    </style>
+</head>
+<body>
+<div class="box" id="box">
+    <ul>
+    </ul>
+</div>
+
+<script>
+var boxNode=document.getElementById("box");
+var ulNode=boxNode.getElementsByTagName('ul')[0];
+var spanWidth=100;
+var spanBorder=5;
+
+var arr=[];//记录每个格子是否有数字，有数字的话，记录是几
+var spanArrAll=[];//记录span对应位置的span节点
+function startFun(){
+    var frag=document.createDocumentFragment();
+    var randomArr=[];
+    for(var y=0,n=0;y<4;y++){
+        arr[y]=[];//二维数组
+        spanArrAll[y]=[];
+        for(var x=0;x<4;x++,n++){
+            arr[y][x]=false;//表示无数字
+            spanArrAll[y][x]=null;
+            var li=document.createElement('li');//创建画布的每个格子
+            frag.appendChild(li);
+
+            randomArr[n]=n;//创建[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+        }
+    }
+    ulNode.appendChild(frag);//创建画布
+
+    //////布局初始数字2,4
+    var spanArr=[];//记录随机的两个span
+    for(var i=0;i<2;i++){
+        var randomPos=Math.floor(Math.random()*randomArr.length);//随机从0-15抓取
+        var randomVal=randomArr[randomPos];//得到随机位置对应的randomArr数组里的数字
+        var spanX=randomVal%4;//将一维转二维x
+        var spanY=Math.floor(randomVal/4);//将一维转二维y
+        var span=document.createElement('span');//创建数字
+        span.style.left=(spanWidth+spanBorder)*spanX+"px";//让数字对应到坐标
+        span.style.top=(spanWidth+spanBorder)*spanY+"px";//让数字对应到坐标
+
+        if(i==0)//只能出现一个4
+        {
+            span.innerHTML=2;
+            arr[spanY][spanX]=2;
+        }
+        else{
+            if(Math.round(Math.random())==1)
+            {
+                span.innerHTML=4;
+                arr[spanY][spanX]=4;
+                span.className="span4";
+            }
+            else{
+                span.innerHTML=2;
+                arr[spanY][spanX]=2;
+            }
+        }
+
+        spanArrAll[spanY][spanX]=span;//将span节点存储于与画布相对应的二维数组中
+        spanArr[i]=span;
+        frag.appendChild(span);
+        randomArr.splice(randomPos,1);//防止重复抓取
+    }
+
+    boxNode.appendChild(frag);//将生成的两个span存储于box
+
+    window.setTimeout(function(){
+        spanArr[0].style.transform="scale(1,1)";//span的出现有延迟效果
+        spanArr[1].style.transform="scale(1,1)";
+    },0);
+}
+
+startFun();
+//console.log(arr);
+document.onkeydown=function(e){
+    var event=window.event || e;
+    var keyCode=event.keyCode || event.which;//上:38;下:40;左：37；右39
+
+    keyDownFun(keyCode);
+};
+
+if(document.addEventListener){//判断是否支持此方法
+    var startX,startY,endX,endY;
+    document.addEventListener("touchstart",function(event){
+        event.preventDefault();// 阻止浏览器默认事件，重要
+        //console.log(event,1);
+        var touch = event.targetTouches[0];
+        startX=touch.pageX;//手指所在的坐标x
+        startY=touch.pageY;//手指所在的坐标y
+    });
+    document.addEventListener("touchmove",function(e){
+
+    });
+    document.addEventListener("touchend",function(event){
+        //console.log(event,2);
+        var touch = event.changedTouches[0];
+        endX=touch.pageX;//手指所在的坐标x
+        endY=touch.pageY;//手指所在的坐标Y
+
+        var x=Math.abs(startX-endX);
+        var y=Math.abs(startY-endY);
+        //上:38;下:40;左：37；右39
+        if(x-y>0)
+        {
+            if(startX-endX>10){//向左
+                keyDownFun(37);
+            }
+            else if(startX-endX<-10)//向右
+            {
+                keyDownFun(39);
+            }
+        }
+        else{
+            if(startY-endY>10){//向上
+                keyDownFun(38);
+            }
+            else if(startY-endY<-10)//向下
+            {
+                keyDownFun(40);
+            }
+        }
+    });
+}
+
+function keyDownFun(keyCode){
+    if(keyCode>=37 && keyCode<=40)
+    {
+
+        var bool=false;//表示没有移动；true表示移动了
+        if(keyCode==38)//上
+        {
+            for(var y=0;y<4;y++){
+                for(var x=0;x<4;x++){
+                    if(arr[y][x]!=false)//如果对应数组存在数字元素
+                    {
+                        var posArr=keyCodeUpFun(x,y);//做递归
+                        //console.log(y,x,spanArrAll);
+                        if(y==posArr[1] && x==posArr[0])//要移过去的位置与原来的位置相同,posArr[]表示要移过去的位置
+                        {
+                            continue;//直接进入下一次循环
+                        }
+
+                        bool=true;
+                        spanArrAll[y][x].style.left=(spanWidth+spanBorder)*posArr[0]+"px";//让数字对应到坐标
+                        spanArrAll[y][x].style.top=(spanWidth+spanBorder)*posArr[1]+"px";//让数字对应到坐标
+
+                        if(spanArrAll[posArr[1]][posArr[0]]!=null)//将合并的上面那个删除
+                            spanArrAll[posArr[1]][posArr[0]].parentNode.removeChild(spanArrAll[posArr[1]][posArr[0]]);//删除要移过去位置的
+
+                        spanArrAll[posArr[1]][posArr[0]]=spanArrAll[y][x];//向上移动
+                        spanArrAll[posArr[1]][posArr[0]].innerHTML=arr[posArr[1]][posArr[0]];//取对应数据的值赋予对应的节点
+                        spanArrAll[posArr[1]][posArr[0]].className="span"+arr[posArr[1]][posArr[0]];//给对应节点加样式
+
+                        spanArrAll[y][x]=null;//原位置清零
+
+                        //console.log(y,x);
+                    }
+                }
+            }
+
+        }
+        else if(keyCode==40){//下
+            for(var y=3;y>=0;y--){
+                for(var x=0;x<4;x++){
+                    if(arr[y][x]!=false)//存在的元素
+                    {
+                        var posArr=keyCodeDownFun(x,y);//做递归
+                        //console.log(y,x,spanArrAll);
+                        if(y==posArr[1] && x==posArr[0])//没移动
+                        {
+                            continue;//直接进入下一次循环
+                        }
+
+                        bool=true;
+                        spanArrAll[y][x].style.left=(spanWidth+spanBorder)*posArr[0]+"px";//让数字对应到坐标
+                        spanArrAll[y][x].style.top=(spanWidth+spanBorder)*posArr[1]+"px";//让数字对应到坐标
+
+                        if(spanArrAll[posArr[1]][posArr[0]]!=null)//将合并的上面那个删除
+                            spanArrAll[posArr[1]][posArr[0]].parentNode.removeChild(spanArrAll[posArr[1]][posArr[0]]);
+
+                        spanArrAll[posArr[1]][posArr[0]]=spanArrAll[y][x];
+                        spanArrAll[posArr[1]][posArr[0]].innerHTML=arr[posArr[1]][posArr[0]];//取对应数据的值赋予对应的节点
+                        spanArrAll[posArr[1]][posArr[0]].className="span"+arr[posArr[1]][posArr[0]];//给对应节点加样式
+
+                        spanArrAll[y][x]=null;
+
+                        //console.log(y,x);
+                    }
+                }
+            }
+        }
+        else if(keyCode==37){//左
+            for(var x=0;x<4;x++){
+                for(var y=0;y<4;y++){
+                    if(arr[y][x]!=false)//存在的元素
+                    {
+                        var posArr=keyCodeLeftFun(x,y);//做递归
+                        //console.log(y,x,spanArrAll);
+                        if(y==posArr[1] && x==posArr[0])//没移动
+                        {
+                            continue;//直接进入下一次循环
+                        }
+
+                        bool=true;
+                        spanArrAll[y][x].style.left=(spanWidth+spanBorder)*posArr[0]+"px";//让数字对应到坐标
+                        spanArrAll[y][x].style.top=(spanWidth+spanBorder)*posArr[1]+"px";//让数字对应到坐标
+
+                        if(spanArrAll[posArr[1]][posArr[0]]!=null)//将合并的上面那个删除
+                            spanArrAll[posArr[1]][posArr[0]].parentNode.removeChild(spanArrAll[posArr[1]][posArr[0]]);
+
+                        spanArrAll[posArr[1]][posArr[0]]=spanArrAll[y][x];
+                        spanArrAll[posArr[1]][posArr[0]].innerHTML=arr[posArr[1]][posArr[0]];//取对应数据的值赋予对应的节点
+                        spanArrAll[posArr[1]][posArr[0]].className="span"+arr[posArr[1]][posArr[0]];//给对应节点加样式
+
+                        spanArrAll[y][x]=null;
+
+                        //console.log(y,x);
+                    }
+                }
+            }
+        }
+        else if(keyCode==39){//右
+            for(var x=3;x>=0;x--){
+                for(var y=0;y<4;y++){
+                    if(arr[y][x]!=false)//存在的元素
+                    {
+                        var posArr=keyCodeRightFun(x,y);//做递归
+                        //console.log(y,x,spanArrAll);
+                        if(y==posArr[1] && x==posArr[0])//没移动
+                        {
+                            continue;//直接进入下一次循环
+                        }
+
+                        bool=true;
+                        spanArrAll[y][x].style.left=(spanWidth+spanBorder)*posArr[0]+"px";//让数字对应到坐标
+                        spanArrAll[y][x].style.top=(spanWidth+spanBorder)*posArr[1]+"px";//让数字对应到坐标
+
+                        if(spanArrAll[posArr[1]][posArr[0]]!=null)//将合并的上面那个删除
+                            spanArrAll[posArr[1]][posArr[0]].parentNode.removeChild(spanArrAll[posArr[1]][posArr[0]]);
+
+                        spanArrAll[posArr[1]][posArr[0]]=spanArrAll[y][x];
+                        spanArrAll[posArr[1]][posArr[0]].innerHTML=arr[posArr[1]][posArr[0]];//取对应数据的值赋予对应的节点
+                        spanArrAll[posArr[1]][posArr[0]].className="span"+arr[posArr[1]][posArr[0]];//给对应节点加样式
+
+                        spanArrAll[y][x]=null;
+
+                        //console.log(y,x);
+                    }
+                }
+            }
+        }
+
+        if(bool)
+            createOne();
+
+    }
+
+    //console.log(arr);
+}
+
+function keyCodeUpFun(x,y){//上；只跟当前的前一个进行比较
+    var xx=x,yy=y-1;//找到上一个进行比较
+    if(yy>=0)//上一个存在时
+    {
+        if(arr[yy][xx]!=false && arr[yy][xx]==arr[y][x])//1.当有相邻相等时
+        {
+            arr[yy][xx]+=arr[yy][xx];//相等则相加
+            arr[y][x]=false;
+            return [xx,yy];//合并的直接返回
+        }
+        if(arr[yy][xx]!=false && arr[yy][xx]!=arr[y][x])//2.相邻但  不相等
+        {
+            return [x,y];
+        }
+        else{//3.没有相邻
+            arr[yy][xx]=arr[y][x];//将原值赋予上一个
+            arr[y][x]=false;
+            return keyCodeUpFun(xx,yy);
+        }
+    }
+    else
+    {
+        return [x,y];
+    }
+}
+
+
+function keyCodeDownFun(x,y){//下；只跟当前的前一个进行比较
+    var xx=x,yy=y+1;//找之前的比较
+    if(yy<4)
+    {
+        if(arr[yy][xx]!=false && arr[yy][xx]==arr[y][x])//与之前相邻相等
+        {
+            arr[yy][xx]+=arr[yy][xx];
+            arr[y][x]=false;
+            return [xx,yy];//合并的直接返回
+        }
+        if(arr[yy][xx]!=false && arr[yy][xx]!=arr[y][x])//与之前相邻不相等
+        {
+            return [x,y];
+        }
+        else{//没有数
+            arr[yy][xx]=arr[y][x];
+            arr[y][x]=false;
+            return keyCodeDownFun(xx,yy);
+        }
+    }
+    else
+    {
+        return [x,y];
+    }
+}
+
+
+function keyCodeLeftFun(x,y){// 左；只跟当前的前一个进行比较
+    var xx=x-1,yy=y;//找之前的比较
+    if(x>=0)
+    {
+        if(arr[yy][xx]!=false && arr[yy][xx]==arr[y][x])//与之前相邻相等
+        {
+            arr[yy][xx]+=arr[yy][xx];
+            arr[y][x]=false;
+            return [xx,yy];//合并的直接返回
+        }
+        if(arr[yy][xx]!=false && arr[yy][xx]!=arr[y][x])//与之前相邻不相等
+        {
+            return [x,y];
+        }
+        else{//没有数
+            arr[yy][xx]=arr[y][x];
+            arr[y][x]=false;
+            return keyCodeLeftFun(xx,yy);
+        }
+    }
+    else
+    {
+        return [x,y];
+    }
+}
+
+function keyCodeRightFun(x,y){// 左；只跟当前的前一个进行比较
+    var xx=x+1,yy=y;//找之前的比较
+    if(x<4)
+    {
+        if(arr[yy][xx]!=false && arr[yy][xx]==arr[y][x])//与之前相邻相等
+        {
+            arr[yy][xx]+=arr[yy][xx];
+            arr[y][x]=false;
+            return [xx,yy];//合并的直接返回
+        }
+        if(arr[yy][xx]!=false && arr[yy][xx]!=arr[y][x])//与之前相邻不相等
+        {
+            return [x,y];
+        }
+        else{//没有数
+            arr[yy][xx]=arr[y][x];
+            arr[y][x]=false;
+            return keyCodeRightFun(xx,yy);
+        }
+    }
+    else
+    {
+        return [x,y];
+    }
+}
+
+function createOne(){//移动玩随机生成一个
+    var num=Math.floor(16*Math.random());//0-15;//随机得到一个数
+    var x=num%4;//将一维转二维x
+    var y=Math.floor(num/4);//将一维转二维y
+    if(arr[y][x])//判断随机的这个存不存在
+    {
+        createOne();
+    }
+    else//不存在
+    {
+        var span=document.createElement("span");
+        span.style.left=(spanWidth+spanBorder)*x+"px";//让数字对应到坐标
+        span.style.top=(spanWidth+spanBorder)*y+"px";//让数字对应到坐标
+        if(Math.round(Math.random())==1)
+        {
+            span.innerHTML=4;
+            arr[y][x]=4;
+            span.className="span4";
+        }
+        else{
+            span.innerHTML=2;
+            arr[y][x]=2;
+        }
+        spanArrAll[y][x]=span;
+
+        boxNode.appendChild(span);//随机生成两个数字
+
+        window.setTimeout(function(){
+            span.style.transform="scale(1,1)";
+        },0);
+    }
+}
+
+</script>
+</body>
+</html>
